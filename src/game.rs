@@ -33,7 +33,7 @@ impl Game {
                         ..Default::default()
                     })
                     .insert(Slider { num })
-                    .insert(Game);
+                    .insert(Self);
                 num += 1;
                 num %= board.0.len();
             }
@@ -108,7 +108,7 @@ impl Game {
     }
 
     // despawn all entity current state when exit
-    fn exit(mut commands: Commands, query: Query<Entity, With<Game>>) {
+    fn exit(mut commands: Commands, query: Query<Entity, With<Self>>) {
         query.for_each(|entity| commands.entity(entity).despawn());
     }
 }
@@ -116,16 +116,16 @@ impl Game {
 impl Plugin for Game {
     fn build(&self, app: &mut App) {
         app.insert_resource(Board::default())
-            .add_system_set(SystemSet::on_enter(GameState::Game).with_system(Game::enter))
+            .add_system_set(SystemSet::on_enter(GameState::Game).with_system(Self::enter))
             .add_system_set(
                 SystemSet::on_update(GameState::Game)
                     // add mouse support
-                    .with_system(Game::mouse_system)
+                    .with_system(Self::mouse_system)
                     // add keyboard support
-                    .with_system(Game::keyboard_system)
-                    .with_system(Game::update),
+                    .with_system(Self::keyboard_system)
+                    .with_system(Self::update),
             )
-            .add_system_set(SystemSet::on_exit(GameState::Game).with_system(Game::exit));
+            .add_system_set(SystemSet::on_exit(GameState::Game).with_system(Self::exit));
     }
 }
 

@@ -1,4 +1,6 @@
-use bevy::{prelude::*, render::camera::WindowOrigin};
+use bevy::{
+    prelude::*, render::camera::WindowOrigin, window::exit_on_window_close_system as exit_on_close,
+};
 use sliding_puzzle_game::{GameMode, GamePlugins, GameState};
 
 fn main() {
@@ -12,7 +14,10 @@ fn main() {
         .add_plugins(DefaultPlugins)
         // this is the actual game
         .add_plugins(GamePlugins)
+        // show our ui and so on
         .add_startup_system(setup_camera)
+        // window close don't app exit default
+        .add_system(exit_on_close)
         .run();
 }
 

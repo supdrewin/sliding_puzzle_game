@@ -26,7 +26,7 @@ impl GameMenu {
                     (Label::Back, "Back"),
                 ]
                 .into_iter()
-                .for_each(|(mode, text)| {
+                .for_each(|(label, text)| {
                     parent
                         .spawn_bundle(ButtonBundle {
                             style: Style {
@@ -53,13 +53,13 @@ impl GameMenu {
                                     ),
                                     ..Default::default()
                                 })
-                                .insert(GameMenu);
+                                .insert(Self);
                         })
-                        .insert(GameMenu)
-                        .insert(mode);
+                        .insert(label)
+                        .insert(Self);
                 });
             })
-            .insert(GameMenu);
+            .insert(Self);
     }
 
     fn update(
@@ -67,7 +67,7 @@ impl GameMenu {
         mut game_mode: ResMut<Option<GameMode>>,
         mut query: Query<
             (&Label, &Interaction, &mut UiColor),
-            (Changed<Interaction>, With<Button>, With<GameMenu>),
+            (Changed<Interaction>, With<Button>, With<Self>),
         >,
     ) {
         query.for_each_mut(|(label, interaction, mut color)| match interaction {
@@ -88,16 +88,16 @@ impl GameMenu {
     }
 
     // despawn all entity current state when exit
-    fn exit(mut commands: Commands, query: Query<Entity, With<GameMenu>>) {
+    fn exit(mut commands: Commands, query: Query<Entity, With<Self>>) {
         query.for_each(|entity| commands.entity(entity).despawn());
     }
 }
 
 impl Plugin for GameMenu {
     fn build(&self, app: &mut App) {
-        app.add_system_set(SystemSet::on_enter(GameState::Menu).with_system(GameMenu::enter))
-            .add_system_set(SystemSet::on_update(GameState::Menu).with_system(GameMenu::update))
-            .add_system_set(SystemSet::on_exit(GameState::Menu).with_system(GameMenu::exit));
+        app.add_system_set(SystemSet::on_enter(GameState::Menu).with_system(Self::enter))
+            .add_system_set(SystemSet::on_update(GameState::Menu).with_system(Self::update))
+            .add_system_set(SystemSet::on_exit(GameState::Menu).with_system(Self::exit));
     }
 }
 

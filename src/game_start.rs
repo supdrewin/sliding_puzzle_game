@@ -49,9 +49,9 @@ impl GameStart {
                                 ),
                                 ..Default::default()
                             })
-                            .insert(GameStart);
+                            .insert(Self);
                     })
-                    .insert(GameStart);
+                    .insert(Self);
                 parent
                     // 40 % bottom
                     .spawn_bundle(NodeBundle {
@@ -90,20 +90,20 @@ impl GameStart {
                                         ),
                                         ..Default::default()
                                     })
-                                    .insert(GameStart);
+                                    .insert(Self);
                             })
-                            .insert(GameStart);
+                            .insert(Self);
                     })
-                    .insert(GameStart);
+                    .insert(Self);
             })
-            .insert(GameStart);
+            .insert(Self);
     }
 
     fn update(
         mut state: ResMut<State<GameState>>,
         mut query: Query<
             (&Interaction, &mut UiColor),
-            (Changed<Interaction>, With<Button>, With<GameStart>),
+            (Changed<Interaction>, With<Button>, With<Self>),
         >,
     ) {
         query.for_each_mut(|(interaction, mut color)| match interaction {
@@ -114,15 +114,15 @@ impl GameStart {
     }
 
     // despawn all entity current state when exit
-    fn exit(mut commands: Commands, query: Query<Entity, With<GameStart>>) {
+    fn exit(mut commands: Commands, query: Query<Entity, With<Self>>) {
         query.for_each(|entity| commands.entity(entity).despawn());
     }
 }
 
 impl Plugin for GameStart {
     fn build(&self, app: &mut App) {
-        app.add_system_set(SystemSet::on_enter(GameState::Start).with_system(GameStart::enter))
-            .add_system_set(SystemSet::on_update(GameState::Start).with_system(GameStart::update))
-            .add_system_set(SystemSet::on_exit(GameState::Start).with_system(GameStart::exit));
+        app.add_system_set(SystemSet::on_enter(GameState::Start).with_system(Self::enter))
+            .add_system_set(SystemSet::on_update(GameState::Start).with_system(Self::update))
+            .add_system_set(SystemSet::on_exit(GameState::Start).with_system(Self::exit));
     }
 }
