@@ -1,0 +1,12 @@
+[package]
+name = "sliding_puzzle_game"
+version = "0.1.0"
+authors = ["Supdrewin"]
+edition = "2021"
+description = "Sliding Puzzle Game with Rust & Bevy."
+repository = "https://github.com/supdrewin/sliding_puzzle_game"
+license = "BSD-2-Clause"
+categories = ["games"]
+
+[dependencies]
+bevy = "0.6"

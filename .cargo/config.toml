@@ -1,0 +1,12 @@
+[build]
+target = "wasm32-unknown-unknown"
+
+[profile.dev]
+opt-level = 2
+
+[profile.release]
+opt-level = "s"
+lto = "thin"
+
+[target.wasm32-unknown-unknown]
+runner = "wasm-server-runner"
