@@ -5,19 +5,20 @@ use bevy::prelude::*;
 pub struct GameMenu;
 
 impl GameMenu {
-    fn enter(mut commands: Commands, asset_server: Res<AssetServer>) {
+    fn enter(mut commands: Commands, server: Res<AssetServer>) {
         commands
             // root node
             .spawn_bundle(NodeBundle {
-                color: Color::NONE.into(),
                 style: Style {
                     // build ui from top to bottom
                     flex_direction: FlexDirection::ColumnReverse,
                     size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
                     ..Default::default()
                 },
+                visibility: Visibility { is_visible: false },
                 ..Default::default()
             })
+            .insert(Self)
             .with_children(|parent| {
                 [
                     // build each botton
@@ -30,14 +31,16 @@ impl GameMenu {
                     parent
                         .spawn_bundle(ButtonBundle {
                             style: Style {
-                                size: Size::new(Val::Percent(50.0), Val::Percent(20.0)),
-                                margin: Rect::all(Val::Auto),
-                                justify_content: JustifyContent::Center,
                                 align_items: AlignItems::Center,
+                                justify_content: JustifyContent::Center,
+                                margin: Rect::all(Val::Auto),
+                                size: Size::new(Val::Percent(50.0), Val::Percent(20.0)),
                                 ..Default::default()
                             },
                             ..Default::default()
                         })
+                        .insert(label)
+                        .insert(Self)
                         .with_children(|parent| {
                             parent
                                 .spawn_bundle(TextBundle {
@@ -45,8 +48,7 @@ impl GameMenu {
                                         text,
                                         TextStyle {
                                             color: Color::OLIVE,
-                                            font: asset_server
-                                                .load("fonts/VictorMono-BoldItalic.ttf"),
+                                            font: server.load("fonts/VictorMono-BoldItalic.ttf"),
                                             font_size: 32.0,
                                         },
                                         Default::default(),
@@ -54,23 +56,17 @@ impl GameMenu {
                                     ..Default::default()
                                 })
                                 .insert(Self);
-                        })
-                        .insert(label)
-                        .insert(Self);
+                        });
                 });
-            })
-            .insert(Self);
+            });
     }
 
     fn update(
         mut game_state: ResMut<State<GameState>>,
         mut game_mode: ResMut<Option<GameMode>>,
-        mut query: Query<
-            (&Label, &Interaction, &mut UiColor),
-            (Changed<Interaction>, With<Button>, With<Self>),
-        >,
+        mut query: Query<(&Interaction, &Label, &mut UiColor), (Changed<Interaction>, With<Label>)>,
     ) {
-        query.for_each_mut(|(label, interaction, mut color)| match interaction {
+        query.for_each_mut(|(interaction, label, mut color)| match interaction {
             Interaction::Clicked => {
                 let (state, mode) = match label {
                     Label::Mode3x3 => (GameState::Game, Some(GameMode(3))),

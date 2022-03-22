@@ -9,12 +9,12 @@ impl Game {
         mut commands: Commands,
         mut board: ResMut<Board>,
         windows: Res<Windows>,
-        game_mode: Res<Option<GameMode>>,
-        asset_server: Res<AssetServer>,
+        mode: Res<Option<GameMode>>,
+        server: Res<AssetServer>,
     ) {
         let window = windows.get_primary().unwrap();
         board.2 = window.width().min(window.height());
-        board.4 = game_mode.as_ref().as_ref().unwrap().0;
+        board.4 = mode.as_ref().as_ref().unwrap().0;
         board.3 = board.2 / board.4 as f32;
         board.0 = vec![Position::default(); board.4.pow(2)];
         let scale = board.3 / 128.0;
@@ -25,7 +25,7 @@ impl Game {
                 board.0[num] = Position { x, y };
                 commands
                     .spawn_bundle(SpriteBundle {
-                        texture: asset_server.load(&format!("sliders/{num}.png")),
+                        texture: server.load(&format!("sliders/{num}.png")),
                         transform: Transform {
                             scale: Vec3::new(scale, scale, 1.0),
                             ..Default::default()
@@ -41,12 +41,12 @@ impl Game {
     }
 
     fn mouse_system(
-        mouse_button: Res<Input<MouseButton>>,
+        mouse: Res<Input<MouseButton>>,
         windows: Res<Windows>,
         mut board: ResMut<Board>,
     ) {
         // move following mouse
-        if mouse_button.pressed(MouseButton::Left) {
+        if mouse.pressed(MouseButton::Left) {
             if let Some(window) = windows.get_primary() {
                 if let Some(pos) = window.cursor_position() {
                     let origin = Position::new(

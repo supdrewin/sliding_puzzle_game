@@ -5,32 +5,35 @@ use bevy::prelude::*;
 pub struct GameStart;
 
 impl GameStart {
-    fn enter(mut commands: Commands, asset_server: Res<AssetServer>) {
+    fn enter(mut commands: Commands, server: Res<AssetServer>) {
         commands
             // whole window context
             .spawn_bundle(NodeBundle {
-                color: Color::NONE.into(),
                 style: Style {
                     // build ui from top to bottom
+                    align_items: AlignItems::Center,
                     flex_direction: FlexDirection::ColumnReverse,
                     size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
                     ..Default::default()
                 },
+                visibility: Visibility { is_visible: false },
                 ..Default::default()
             })
+            .insert(Self)
             .with_children(|parent| {
                 parent
                     // 60% top
                     .spawn_bundle(NodeBundle {
-                        color: Color::NONE.into(),
                         style: Style {
                             align_items: AlignItems::Center,
                             justify_content: JustifyContent::Center,
                             size: Size::new(Val::Percent(100.0), Val::Percent(60.0)),
                             ..Default::default()
                         },
+                        visibility: Visibility { is_visible: false },
                         ..Default::default()
                     })
+                    .insert(Self)
                     .with_children(|parent| {
                         parent
                             // our honor title
@@ -39,7 +42,7 @@ impl GameStart {
                                     "Sliding Puzzle Game",
                                     TextStyle {
                                         color: Color::NAVY,
-                                        font: asset_server.load("fonts/VictorMono-BoldItalic.ttf"),
+                                        font: server.load("fonts/VictorMono-BoldItalic.ttf"),
                                         font_size: 128.0,
                                     },
                                     TextAlignment {
@@ -50,18 +53,18 @@ impl GameStart {
                                 ..Default::default()
                             })
                             .insert(Self);
-                    })
-                    .insert(Self);
+                    });
                 parent
                     // 40 % bottom
                     .spawn_bundle(NodeBundle {
-                        color: Color::NONE.into(),
                         style: Style {
-                            size: Size::new(Val::Percent(100.0), Val::Percent(40.0)),
+                            size: Size::new(Val::Percent(50.0), Val::Percent(40.0)),
                             ..Default::default()
                         },
+                        visibility: Visibility { is_visible: false },
                         ..Default::default()
                     })
+                    .insert(Self)
                     .with_children(|parent| {
                         parent
                             // a continue button
@@ -70,11 +73,12 @@ impl GameStart {
                                     align_items: AlignItems::Center,
                                     margin: Rect::all(Val::Auto),
                                     justify_content: JustifyContent::Center,
-                                    size: Size::new(Val::Percent(50.0), Val::Percent(50.0)),
+                                    size: Size::new(Val::Percent(100.0), Val::Percent(50.0)),
                                     ..Default::default()
                                 },
                                 ..Default::default()
                             })
+                            .insert(Self)
                             .with_children(|parent| {
                                 parent
                                     .spawn_bundle(TextBundle {
@@ -82,7 +86,7 @@ impl GameStart {
                                             "Start",
                                             TextStyle {
                                                 color: Color::OLIVE,
-                                                font: asset_server
+                                                font: server
                                                     .load("fonts/VictorMono-BoldItalic.ttf"),
                                                 font_size: 64.0,
                                             },
@@ -91,12 +95,9 @@ impl GameStart {
                                         ..Default::default()
                                     })
                                     .insert(Self);
-                            })
-                            .insert(Self);
-                    })
-                    .insert(Self);
-            })
-            .insert(Self);
+                            });
+                    });
+            });
     }
 
     fn update(
