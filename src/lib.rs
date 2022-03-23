@@ -17,11 +17,24 @@ impl PluginGroup for GamePlugins {
     }
 }
 
+pub trait CleanUp<T: Component> {
+    // despawn all entity current state marked when exit
+    fn exit(mut commands: Commands, query: Query<Entity, With<T>>) {
+        query.for_each(|entity| commands.entity(entity).despawn_recursive());
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum GameState {
     Start,
     Menu,
     Game,
+}
+
+impl Default for GameState {
+    fn default() -> Self {
+        Self::Start
+    }
 }
 
 // 3x3, 4x4 or None

@@ -1,4 +1,4 @@
-use super::GameState;
+use super::{CleanUp, GameState};
 use bevy::prelude::*;
 
 #[derive(Component)]
@@ -33,7 +33,6 @@ impl GameStart {
                         visibility: Visibility { is_visible: false },
                         ..Default::default()
                     })
-                    .insert(Self)
                     .with_children(|parent| {
                         parent
                             // our honor title
@@ -51,8 +50,7 @@ impl GameStart {
                                     },
                                 ),
                                 ..Default::default()
-                            })
-                            .insert(Self);
+                            });
                     });
                 parent
                     // 40 % bottom
@@ -64,7 +62,6 @@ impl GameStart {
                         visibility: Visibility { is_visible: false },
                         ..Default::default()
                     })
-                    .insert(Self)
                     .with_children(|parent| {
                         parent
                             // a continue button
@@ -78,23 +75,20 @@ impl GameStart {
                                 },
                                 ..Default::default()
                             })
-                            .insert(Self)
+                            .insert(Label)
                             .with_children(|parent| {
-                                parent
-                                    .spawn_bundle(TextBundle {
-                                        text: Text::with_section(
-                                            "Start",
-                                            TextStyle {
-                                                color: Color::OLIVE,
-                                                font: server
-                                                    .load("fonts/VictorMono-BoldItalic.ttf"),
-                                                font_size: 64.0,
-                                            },
-                                            Default::default(),
-                                        ),
-                                        ..Default::default()
-                                    })
-                                    .insert(Self);
+                                parent.spawn_bundle(TextBundle {
+                                    text: Text::with_section(
+                                        "Start",
+                                        TextStyle {
+                                            color: Color::OLIVE,
+                                            font: server.load("fonts/VictorMono-BoldItalic.ttf"),
+                                            font_size: 64.0,
+                                        },
+                                        Default::default(),
+                                    ),
+                                    ..Default::default()
+                                });
                             });
                     });
             });
@@ -102,10 +96,7 @@ impl GameStart {
 
     fn update(
         mut state: ResMut<State<GameState>>,
-        mut query: Query<
-            (&Interaction, &mut UiColor),
-            (Changed<Interaction>, With<Button>, With<Self>),
-        >,
+        mut query: Query<(&Interaction, &mut UiColor), (Changed<Interaction>, With<Label>)>,
     ) {
         query.for_each_mut(|(interaction, mut color)| match interaction {
             Interaction::Clicked => state.set(GameState::Menu).unwrap(),
@@ -113,12 +104,9 @@ impl GameStart {
             Interaction::None => *color = Color::YELLOW.into(),
         });
     }
-
-    // despawn all entity current state when exit
-    fn exit(mut commands: Commands, query: Query<Entity, With<Self>>) {
-        query.for_each(|entity| commands.entity(entity).despawn());
-    }
 }
+
+impl CleanUp<Self> for GameStart {}
 
 impl Plugin for GameStart {
     fn build(&self, app: &mut App) {
@@ -127,3 +115,6 @@ impl Plugin for GameStart {
             .add_system_set(SystemSet::on_exit(GameState::Start).with_system(Self::exit));
     }
 }
+
+#[derive(Component)]
+struct Label;

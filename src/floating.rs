@@ -69,26 +69,12 @@ impl Floating {
         mut query: Query<(&Interaction, &Label, &mut UiImage), (Changed<Interaction>, With<Label>)>,
     ) {
         query.for_each_mut(|(interaction, label, mut image)| match interaction {
+            Interaction::None => *image = server.load("images/button_blue.png").into(),
+            Interaction::Hovered => *image = server.load("images/button_blue_hovered.png").into(),
             Interaction::Clicked => match label {
                 Label::Help => Self::help_system(),
                 Label::Info => Self::info_system(),
             },
-            Interaction::Hovered => {
-                *image = server
-                    .load(match label {
-                        Label::Help => "buttons/hovered.png",
-                        Label::Info => "buttons/hovered.png",
-                    })
-                    .into();
-            }
-            Interaction::None => {
-                *image = server
-                    .load(match label {
-                        Label::Help => "buttons/blue.png",
-                        Label::Info => "buttons/blue.png",
-                    })
-                    .into();
-            }
         });
     }
 }

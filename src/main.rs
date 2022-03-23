@@ -2,19 +2,17 @@ use bevy::{
     input::system::exit_on_esc_system as exit_on_esc, prelude::*, render::camera::WindowOrigin,
     window::exit_on_window_close_system as exit_on_close,
 };
-use sliding_puzzle_game::{GameMode, GamePlugins, GameState};
+use sliding_puzzle_game::{GamePlugins, GameState};
 
 fn main() {
     App::new()
         // background color
         .insert_resource(ClearColor(Color::ORANGE))
-        // 3x3, 4x4 or None
-        .insert_resource(None::<GameMode>)
-        // welcome to game
-        .add_state(GameState::Start)
         .add_plugins(DefaultPlugins)
         // this is the actual game
         .add_plugins(GamePlugins)
+        // welcome to game
+        .add_state(GameState::default())
         // show our ui and so on
         .add_startup_system(setup_camera)
         // window close don't app exit default

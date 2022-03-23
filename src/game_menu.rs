@@ -1,4 +1,4 @@
-use super::{GameMode, GameState};
+use super::{CleanUp, GameMode, GameState};
 use bevy::prelude::*;
 
 #[derive(Component)]
@@ -40,54 +40,53 @@ impl GameMenu {
                             ..Default::default()
                         })
                         .insert(label)
-                        .insert(Self)
                         .with_children(|parent| {
-                            parent
-                                .spawn_bundle(TextBundle {
-                                    text: Text::with_section(
-                                        text,
-                                        TextStyle {
-                                            color: Color::OLIVE,
-                                            font: server.load("fonts/VictorMono-BoldItalic.ttf"),
-                                            font_size: 32.0,
-                                        },
-                                        Default::default(),
-                                    ),
-                                    ..Default::default()
-                                })
-                                .insert(Self);
+                            parent.spawn_bundle(TextBundle {
+                                text: Text::with_section(
+                                    text,
+                                    TextStyle {
+                                        color: Color::OLIVE,
+                                        font: server.load("fonts/VictorMono-BoldItalic.ttf"),
+                                        font_size: 32.0,
+                                    },
+                                    Default::default(),
+                                ),
+                                ..Default::default()
+                            });
                         });
                 });
             });
     }
 
     fn update(
-        mut game_state: ResMut<State<GameState>>,
-        mut game_mode: ResMut<Option<GameMode>>,
+        mut commands: Commands,
+        mut state: ResMut<State<GameState>>,
         mut query: Query<(&Interaction, &Label, &mut UiColor), (Changed<Interaction>, With<Label>)>,
     ) {
         query.for_each_mut(|(interaction, label, mut color)| match interaction {
             Interaction::Clicked => {
-                let (state, mode) = match label {
-                    Label::Mode3x3 => (GameState::Game, Some(GameMode(3))),
-                    Label::Mode4x4 => (GameState::Game, Some(GameMode(4))),
-                    Label::Back => (GameState::Start, None),
-                };
                 // set game state
-                game_state.set(state).unwrap();
-                // set game mode
-                *game_mode = mode;
+                state
+                    .set(match label {
+                        Label::Mode3x3 => {
+                            commands.insert_resource(GameMode(3));
+                            GameState::Game
+                        }
+                        Label::Mode4x4 => {
+                            commands.insert_resource(GameMode(4));
+                            GameState::Game
+                        }
+                        Label::Back => GameState::default(),
+                    })
+                    .unwrap();
             }
             Interaction::Hovered => *color = Color::GOLD.into(),
             Interaction::None => *color = Color::YELLOW.into(),
         });
     }
-
-    // despawn all entity current state when exit
-    fn exit(mut commands: Commands, query: Query<Entity, With<Self>>) {
-        query.for_each(|entity| commands.entity(entity).despawn());
-    }
 }
+
+impl CleanUp<Self> for GameMenu {}
 
 impl Plugin for GameMenu {
     fn build(&self, app: &mut App) {
