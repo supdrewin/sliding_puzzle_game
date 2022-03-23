@@ -17,13 +17,6 @@ impl PluginGroup for GamePlugins {
     }
 }
 
-pub trait CleanUp<T: Component> {
-    // despawn all entity current state marked when exit
-    fn exit(mut commands: Commands, query: Query<Entity, With<T>>) {
-        query.for_each(|entity| commands.entity(entity).despawn_recursive());
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum GameState {
     Start,
@@ -37,5 +30,37 @@ impl Default for GameState {
     }
 }
 
+#[derive(Component)]
+pub struct TextLabel {
+    pub scales: Vec<TextScale>,
+}
+
+impl TextLabel {
+    fn with_section(section: TextScale) -> Self {
+        Self {
+            scales: vec![section],
+        }
+    }
+}
+
+#[derive(Component)]
+pub struct TextScale {
+    pub height: f32,
+    pub width: f32,
+}
+
+impl TextScale {
+    fn new(width: f32, height: f32) -> Self {
+        Self { height, width }
+    }
+}
+
 // 3x3, 4x4 or None
-pub struct GameMode(usize);
+struct GameMode(usize);
+
+trait CleanUp<T: Component> {
+    // despawn all entity current state marked when exit
+    fn exit(mut commands: Commands, query: Query<Entity, With<T>>) {
+        query.for_each(|entity| commands.entity(entity).despawn_recursive());
+    }
+}

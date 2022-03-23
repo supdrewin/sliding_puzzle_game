@@ -1,4 +1,4 @@
-use super::{CleanUp, GameState};
+use super::{CleanUp, GameState, TextLabel, TextScale};
 use bevy::prelude::*;
 
 #[derive(Component)]
@@ -42,7 +42,7 @@ impl GameStart {
                                     TextStyle {
                                         color: Color::NAVY,
                                         font: server.load("fonts/VictorMono-BoldItalic.ttf"),
-                                        font_size: 128.0,
+                                        ..Default::default()
                                     },
                                     TextAlignment {
                                         horizontal: HorizontalAlign::Center,
@@ -50,7 +50,8 @@ impl GameStart {
                                     },
                                 ),
                                 ..Default::default()
-                            });
+                            })
+                            .insert(TextLabel::with_section(TextScale::new(0.1, 0.2)));
                     });
                 parent
                     // 40 % bottom
@@ -77,18 +78,21 @@ impl GameStart {
                             })
                             .insert(Label)
                             .with_children(|parent| {
-                                parent.spawn_bundle(TextBundle {
-                                    text: Text::with_section(
-                                        "Start",
-                                        TextStyle {
-                                            color: Color::OLIVE,
-                                            font: server.load("fonts/VictorMono-BoldItalic.ttf"),
-                                            font_size: 64.0,
-                                        },
-                                        Default::default(),
-                                    ),
-                                    ..Default::default()
-                                });
+                                parent
+                                    .spawn_bundle(TextBundle {
+                                        text: Text::with_section(
+                                            "Start",
+                                            TextStyle {
+                                                color: Color::OLIVE,
+                                                font: server
+                                                    .load("fonts/VictorMono-BoldItalic.ttf"),
+                                                ..Default::default()
+                                            },
+                                            Default::default(),
+                                        ),
+                                        ..Default::default()
+                                    })
+                                    .insert(TextLabel::with_section(TextScale::new(0.05, 0.1)));
                             });
                     });
             });

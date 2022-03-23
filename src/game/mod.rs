@@ -6,70 +6,55 @@ pub struct Game;
 
 impl Game {
     fn enter(
+        mut board: ResMut<Board>,
         mut commands: Commands,
         mode: Res<GameMode>,
-        windows: Res<Windows>,
         server: Res<AssetServer>,
     ) {
-        if let Some(window) = windows.get_primary() {
-            let standard = window.width().min(window.height());
-            let mut board = Board {
-                offset: standard * 0.1,
-                size: standard * 0.8,
-                slider_map: vec![Position::default(); mode.0.pow(2)],
-                position_map: HashMap::default(),
-                ..Default::default()
-            };
-            board.slider_size = board.size / mode.0 as f32;
-            let scale = board.slider_size / 128.0;
-            (0..mode.0)
-                .flat_map(|x| (0..mode.0).map(move |y| (x, y)))
-                .zip((0..board.slider_map.len()).cycle().skip(1))
-                .for_each(|((y, x), num)| {
-                    let pos = Position::from((x, y));
-                    board.slider_map[num] = pos;
-                    board.position_map.insert(pos, num);
-                    commands
-                        // slider image
-                        .spawn_bundle(SpriteBundle {
-                            texture: server.load("images/slider_default.png"),
-                            transform: Transform {
-                                scale: Vec3::new(scale, scale, 1.0),
-                                ..Default::default()
-                            },
-                            ..Default::default()
-                        })
-                        .insert(Slider { num })
-                        .insert(Self)
-                        .with_children(|parent| {
-                            parent
-                                // slider number
-                                .spawn_bundle(Text2dBundle {
-                                    text: Text::with_section(
-                                        num.to_string(),
-                                        TextStyle {
-                                            color: Color::YELLOW,
-                                            font: server.load("fonts/VictorMono-Bold.ttf"),
-                                            font_size: board.slider_size / 2.0,
-                                        },
-                                        TextAlignment {
-                                            horizontal: HorizontalAlign::Center,
-                                            vertical: VerticalAlign::Center,
-                                        },
-                                    ),
-                                    transform: Transform {
-                                        translation: Vec3::new(0.0, 0.0, 1.0),
+        board.slider_map = vec![Position::default(); mode.0.pow(2)];
+        (0..mode.0)
+            .flat_map(|x| (0..mode.0).map(move |y| (x, y)))
+            .zip((0..board.slider_map.len()).cycle().skip(1))
+            .for_each(|((y, x), num)| {
+                let pos = Position::from((x, y));
+                board.slider_map[num] = pos;
+                board.position_map.insert(pos, num);
+                commands
+                    // slider image
+                    .spawn_bundle(SpriteBundle {
+                        texture: server.load("images/slider_default.png"),
+                        ..Default::default()
+                    })
+                    .insert(Slider { num })
+                    .insert(Self)
+                    .with_children(|parent| {
+                        parent
+                            // slider number
+                            .spawn_bundle(Text2dBundle {
+                                text: Text::with_section(
+                                    num.to_string(),
+                                    TextStyle {
+                                        color: Color::YELLOW,
+                                        font: server.load("fonts/VictorMono-Bold.ttf"),
                                         ..Default::default()
                                     },
-                                    visibility: Visibility {
-                                        is_visible: num != 0,
+                                    TextAlignment {
+                                        horizontal: HorizontalAlign::Center,
+                                        vertical: VerticalAlign::Center,
                                     },
+                                ),
+                                transform: Transform {
+                                    translation: Vec3::new(0.0, 0.0, 1.0),
                                     ..Default::default()
-                                });
-                        });
-                });
-            commands.insert_resource(board);
-        }
+                                },
+                                visibility: Visibility {
+                                    is_visible: num != 0,
+                                },
+                                ..Default::default()
+                            })
+                            .insert(SliderNumber);
+                    });
+            });
     }
 
     fn mouse_system(
@@ -136,19 +121,46 @@ impl Game {
             });
         }
     }
+
+    fn viewport(
+        windows: Res<Windows>,
+        mode: Res<GameMode>,
+        mut board: ResMut<Board>,
+        mut transform: Query<&mut Transform, With<Slider>>,
+        mut text: Query<&mut Text, With<SliderNumber>>,
+    ) {
+        if windows.is_changed() {
+            if let Some(window) = windows.get_primary() {
+                let min = window.width().min(window.height());
+                board.offset = min * 0.1;
+                board.size = min * 0.8;
+                board.slider_size = board.size / mode.0 as f32;
+                board.text_size = board.slider_size / 2.0;
+                board.scale = board.slider_size / 128.0;
+                transform.for_each_mut(|mut transform| {
+                    transform.scale = Vec3::new(board.scale, board.scale, 1.0);
+                });
+                text.for_each_mut(|mut text| {
+                    text.sections[0].style.font_size = board.text_size;
+                });
+            }
+        }
+    }
 }
 
 impl CleanUp<Self> for Game {}
 
 impl Plugin for Game {
     fn build(&self, app: &mut App) {
-        app.add_system_set(SystemSet::on_enter(GameState::Game).with_system(Self::enter))
+        app.insert_resource(Board::default())
+            .add_system_set(SystemSet::on_enter(GameState::Game).with_system(Self::enter))
             .add_system_set(
                 SystemSet::on_update(GameState::Game)
                     // add mouse support
                     .with_system(Self::mouse_system)
                     // add keyboard support
                     .with_system(Self::keyboard_system)
+                    .with_system(Self::viewport)
                     .with_system(Self::update),
             )
             .add_system_set(SystemSet::on_exit(GameState::Game).with_system(Self::exit));
@@ -161,12 +173,17 @@ struct Slider {
     num: usize,
 }
 
+#[derive(Component)]
+struct SliderNumber;
+
 // TODO: update board after window resized.
 #[derive(Component, Default)]
 struct Board {
     offset: f32,
+    scale: f32,
     size: f32,
     slider_size: f32,
+    text_size: f32,
     slider_map: Vec<Position>,
     position_map: HashMap<Position, usize>,
 }

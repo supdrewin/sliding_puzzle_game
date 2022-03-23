@@ -1,4 +1,4 @@
-use super::{CleanUp, GameMode, GameState};
+use super::{CleanUp, GameMode, GameState, TextLabel, TextScale};
 use bevy::prelude::*;
 
 #[derive(Component)]
@@ -41,18 +41,20 @@ impl GameMenu {
                         })
                         .insert(label)
                         .with_children(|parent| {
-                            parent.spawn_bundle(TextBundle {
-                                text: Text::with_section(
-                                    text,
-                                    TextStyle {
-                                        color: Color::OLIVE,
-                                        font: server.load("fonts/VictorMono-BoldItalic.ttf"),
-                                        font_size: 32.0,
-                                    },
-                                    Default::default(),
-                                ),
-                                ..Default::default()
-                            });
+                            parent
+                                .spawn_bundle(TextBundle {
+                                    text: Text::with_section(
+                                        text,
+                                        TextStyle {
+                                            color: Color::OLIVE,
+                                            font: server.load("fonts/VictorMono-BoldItalic.ttf"),
+                                            ..Default::default()
+                                        },
+                                        Default::default(),
+                                    ),
+                                    ..Default::default()
+                                })
+                                .insert(TextLabel::with_section(TextScale::new(0.05, 0.1)));
                         });
                 });
             });
