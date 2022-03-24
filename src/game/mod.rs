@@ -1,4 +1,5 @@
 mod buttons;
+mod counter;
 
 use super::{CleanUp, GameMode, GameState};
 use bevy::{prelude::*, utils::HashMap};
@@ -8,12 +9,8 @@ use buttons::ShouldBeRestored;
 pub struct Game;
 
 impl Game {
-    fn enter(
-        mut board: ResMut<Board>,
-        mut commands: Commands,
-        mode: Res<GameMode>,
-        server: Res<AssetServer>,
-    ) {
+    fn enter(mut commands: Commands, mode: Res<GameMode>, server: Res<AssetServer>) {
+        let mut board = Board::default();
         board.slider_map = vec![Position::default(); mode.0.pow(2)];
         (0..mode.0)
             .flat_map(|x| (0..mode.0).map(move |y| (x, y)))
@@ -59,7 +56,9 @@ impl Game {
                     });
             });
         // backup the original board
-        commands.insert_resource(BoardOrigin::from(&*board));
+        commands.insert_resource(BoardOrigin::from(&board));
+        // insert current board
+        commands.insert_resource(board);
     }
 
     fn mouse_system(
@@ -168,7 +167,6 @@ impl Plugin for Game {
         #[derive(SystemLabel, Clone, Debug, PartialEq, Eq, Hash)]
         struct ButtonsInteraction;
         app.add_event::<ShouldBeRestored>()
-            .insert_resource(Board::default())
             .add_system_set(
                 SystemSet::on_enter(GameState::Game)
                     .with_system(buttons::setup)
