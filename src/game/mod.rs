@@ -2,6 +2,7 @@ mod buttons;
 mod counter;
 
 use super::{CleanUp, GameMode, GameState};
+use crate::animation::AnimationEvent;
 use bevy::{prelude::*, utils::HashMap};
 use buttons::ShouldBeRestored;
 
@@ -9,7 +10,13 @@ use buttons::ShouldBeRestored;
 pub struct Game;
 
 impl Game {
-    fn enter(mut commands: Commands, mode: Res<GameMode>, server: Res<AssetServer>) {
+    fn enter(
+        mut commands: Commands,
+        mut writer: EventWriter<AnimationEvent>,
+        mode: Res<GameMode>,
+        server: Res<AssetServer>,
+    ) {
+        writer.send(AnimationEvent);
         let mut board = Board::default();
         board.slider_map = vec![Position::default(); mode.0.pow(2)];
         (0..mode.0)
@@ -151,7 +158,7 @@ impl Game {
         }
     }
 
-    fn wait_restore(
+    fn wait_reset(
         origin: Res<BoardOrigin>,
         mut board: ResMut<Board>,
         mut reader: EventReader<ShouldBeRestored>,
@@ -176,7 +183,7 @@ impl Plugin for Game {
                 SystemSet::on_update(GameState::Game)
                     // process should be restored event
                     .with_system(buttons::interaction.label(ButtonsInteraction))
-                    .with_system(Self::wait_restore.after(ButtonsInteraction))
+                    .with_system(Self::wait_reset.after(ButtonsInteraction))
                     // add mouse support
                     .with_system(Self::mouse_system)
                     // add keyboard support

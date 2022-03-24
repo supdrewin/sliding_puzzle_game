@@ -1,8 +1,10 @@
+mod animation;
 mod floating;
 mod game;
 mod game_menu;
 mod game_start;
 
+use animation::Animation;
 use bevy::{app::PluginGroupBuilder, prelude::*};
 use floating::Floating;
 use game::Game;
@@ -13,7 +15,12 @@ pub struct GamePlugins;
 
 impl PluginGroup for GamePlugins {
     fn build(&mut self, builder: &mut PluginGroupBuilder) {
-        builder.add(Floating).add(GameStart).add(GameMenu).add(Game);
+        builder
+            .add(Animation)
+            .add(Floating)
+            .add(GameStart)
+            .add(GameMenu)
+            .add(Game);
     }
 }
 

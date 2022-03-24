@@ -22,7 +22,7 @@ pub fn setup(mut commands: Commands, server: Res<AssetServer>) {
         // as a part of game
         .insert(Game)
         .with_children(|parent| {
-            [(Label::Restore, "Restore"), (Label::Back, "Back")]
+            [(Label::Reset, "Reset"), (Label::Back, "Back")]
                 .into_iter()
                 .for_each(|(label, text)| {
                     parent // space item
@@ -75,7 +75,7 @@ pub fn interaction(
 ) {
     query.for_each_mut(|(interaction, label, mut color)| match interaction {
         Interaction::Clicked => match label {
-            Label::Restore => writer.send(ShouldBeRestored),
+            Label::Reset => writer.send(ShouldBeRestored),
             Label::Back => state.set(GameState::Menu).unwrap(),
         },
         Interaction::Hovered => *color = Color::GOLD.into(),
@@ -89,6 +89,6 @@ pub struct ShouldBeRestored;
 // buttons
 #[derive(Component)]
 pub enum Label {
-    Restore,
+    Reset,
     Back,
 }

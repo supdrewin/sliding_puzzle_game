@@ -1,11 +1,18 @@
 use super::{CleanUp, GameMode, GameState, TextLabel, TextScale};
+use crate::animation::AnimationEvent;
+
 use bevy::prelude::*;
 
 #[derive(Component)]
 pub struct GameMenu;
 
 impl GameMenu {
-    fn enter(mut commands: Commands, server: Res<AssetServer>) {
+    fn enter(
+        mut commands: Commands,
+        mut writer: EventWriter<AnimationEvent>,
+        server: Res<AssetServer>,
+    ) {
+        writer.send(AnimationEvent);
         commands
             // root node
             .spawn_bundle(NodeBundle {

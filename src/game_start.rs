@@ -1,11 +1,17 @@
 use super::{CleanUp, GameState, TextLabel, TextScale};
+use crate::animation::AnimationEvent;
 use bevy::prelude::*;
 
 #[derive(Component)]
 pub struct GameStart;
 
 impl GameStart {
-    fn enter(mut commands: Commands, server: Res<AssetServer>) {
+    fn enter(
+        mut commands: Commands,
+        mut writer: EventWriter<AnimationEvent>,
+        server: Res<AssetServer>,
+    ) {
+        writer.send(AnimationEvent);
         commands
             // whole window context
             .spawn_bundle(NodeBundle {

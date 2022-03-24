@@ -1,6 +1,6 @@
 [package]
 name = "sliding_puzzle_game"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Supdrewin"]
 edition = "2021"
 description = "Sliding Puzzle Game with Rust & Bevy."
@@ -9,4 +9,13 @@ license = "BSD-2-Clause"
 categories = ["games"]
 
 [dependencies]
-bevy = "0.6"
+bevy = { version = "0.6", default-features = false, features = [
+	"bevy_core_pipeline",
+	"bevy_render",
+	"bevy_sprite",
+	"bevy_text",
+	"bevy_ui",
+	"bevy_winit",
+	"png",
+	"x11",
+] }
