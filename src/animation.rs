@@ -30,61 +30,61 @@ impl Animation {
         windows: Res<Windows>,
         mut reader: EventReader<AnimationEvent>,
         mut query: Query<(&Direction, &mut Transform), With<Direction>>,
-        // should we play an animation now
-        mut local: Local<ShouldPlay>,
+        mut counter: Local<Counter>, // how many frames remaining
     ) {
-        if let Some(window) = windows.get_primary() {
-            reader.iter().for_each(|_| {
-                let (x, y) = (
-                    (window.physical_width() >> 1) as f32,
-                    (window.physical_height() >> 1) as f32,
+        if windows.is_changed() {
+            if let Some(window) = windows.get_primary() {
+                let size = (window.width(), window.height());
+                counter.bottom = (size.0 / 4.0, size.1 / 4.0);
+                counter.top = (size.0 - counter.bottom.0, size.1 - counter.bottom.1);
+                counter.scale = (
+                    counter.top.0 - counter.bottom.0,
+                    counter.top.1 - counter.bottom.1,
                 );
-                query.for_each_mut(|(direction, mut transform)| {
-                    transform.scale = Vec3::new(x, y, 1.0);
-                    transform.translation = match direction {
-                        Direction::BottomLeft => Vec3::new(0.0, 0.0, 10.0),
-                        Direction::BottomRight => Vec3::new(x, 0.0, 10.0),
-                        Direction::TopLeft => Vec3::new(0.0, y, 10.0),
-                        Direction::TopRight => Vec3::new(x, y, 10.0),
-                    };
-                });
-                local.should_play = true;
+                counter.step = (
+                    counter.scale.0 / counter.frames.1 as f32,
+                    counter.scale.1 / counter.frames.1 as f32,
+                );
+            }
+        }
+        reader.iter().for_each(|_| {
+            query.for_each_mut(|(direction, mut transform)| {
+                transform.scale = Vec3::new(counter.scale.0, counter.scale.1, 1.0);
+                transform.translation = match direction {
+                    Direction::BottomLeft => Vec3::new(counter.bottom.0, counter.bottom.1, 10.0),
+                    Direction::BottomRight => Vec3::new(counter.top.0, counter.bottom.1, 10.0),
+                    Direction::TopLeft => Vec3::new(counter.bottom.0, counter.top.1, 10.0),
+                    Direction::TopRight => Vec3::new(counter.top.0, counter.top.1, 10.0),
+                };
             });
-            if local.should_play {
-                let (step_x, step_y) = (
-                    (window.physical_width() >> 6) as f32,
-                    (window.physical_height() >> 6) as f32,
-                ); // 64 frames
-                query.for_each_mut(|(direction, mut transform)| {
-                    match direction {
-                        Direction::BottomLeft => {
-                            transform.translation.x -= step_x;
-                            transform.translation.y -= step_y;
-                        }
-                        Direction::BottomRight => {
-                            transform.translation.x += step_x;
-                            transform.translation.y -= step_y;
-                        }
-                        Direction::TopLeft => {
-                            transform.translation.x -= step_x;
-                            transform.translation.y += step_y;
-                        }
-                        Direction::TopRight => {
-                            transform.translation.x += step_x;
-                            transform.translation.y += step_y;
-                            if transform.translation.x > window.physical_width() as f32
-                                && transform.translation.y > window.physical_height() as f32
-                            {
-                                local.should_play = false;
-                            }
-                        }
-                    };
+            counter.frames.0 = counter.frames.1;
+        });
+        if counter.frames.0 > 0 {
+            query.for_each_mut(|(direction, mut transform)| {
+                match direction {
+                    Direction::BottomLeft => {
+                        transform.translation.x -= counter.step.0;
+                        transform.translation.y -= counter.step.1;
+                    }
+                    Direction::BottomRight => {
+                        transform.translation.x += counter.step.0;
+                        transform.translation.y -= counter.step.1;
+                    }
+                    Direction::TopLeft => {
+                        transform.translation.x -= counter.step.0;
+                        transform.translation.y += counter.step.1;
+                    }
+                    Direction::TopRight => {
+                        transform.translation.x += counter.step.0;
+                        transform.translation.y += counter.step.1;
+                    }
+                };
+            });
+            counter.frames.0 -= 1;
+            if counter.frames.0 == 0 {
+                query.for_each_mut(|(_, mut transform)| {
+                    transform.translation.z = 1000.0; // disapear
                 });
-                if !local.should_play {
-                    query.for_each_mut(|(_, mut transform)| {
-                        transform.translation.z = 1000.0; // disapear
-                    });
-                }
             }
         }
     }
@@ -108,7 +108,23 @@ enum Direction {
     TopRight,
 }
 
-#[derive(Default)]
-struct ShouldPlay {
-    should_play: bool,
+struct Counter {
+    bottom: (f32, f32),
+    top: (f32, f32),
+    scale: (f32, f32),
+    step: (f32, f32),
+    frames: (usize, usize),
+}
+
+impl Default for Counter {
+    fn default() -> Self {
+        Self {
+            bottom: Default::default(),
+            top: Default::default(),
+            scale: Default::default(),
+            step: Default::default(),
+            // remaining and totals
+            frames: (0, 60),
+        }
+    }
 }
