@@ -1,5 +1,8 @@
+mod buttons;
+
 use super::{CleanUp, GameMode, GameState};
 use bevy::{prelude::*, utils::HashMap};
+use buttons::ShouldBeRestored;
 
 #[derive(Component)]
 pub struct Game;
@@ -55,6 +58,8 @@ impl Game {
                             .insert(SliderNumber);
                     });
             });
+        // backup the original board
+        commands.insert_resource(BoardOrigin::from(&*board));
     }
 
     fn mouse_system(
@@ -146,16 +151,34 @@ impl Game {
             }
         }
     }
+
+    fn wait_restore(
+        origin: Res<BoardOrigin>,
+        mut board: ResMut<Board>,
+        mut reader: EventReader<ShouldBeRestored>,
+    ) {
+        reader.iter().for_each(|_| board.restore(&origin));
+    }
 }
 
 impl CleanUp<Self> for Game {}
 
 impl Plugin for Game {
     fn build(&self, app: &mut App) {
-        app.insert_resource(Board::default())
-            .add_system_set(SystemSet::on_enter(GameState::Game).with_system(Self::enter))
+        #[derive(SystemLabel, Clone, Debug, PartialEq, Eq, Hash)]
+        struct ButtonsInteraction;
+        app.add_event::<ShouldBeRestored>()
+            .insert_resource(Board::default())
+            .add_system_set(
+                SystemSet::on_enter(GameState::Game)
+                    .with_system(buttons::setup)
+                    .with_system(Self::enter),
+            )
             .add_system_set(
                 SystemSet::on_update(GameState::Game)
+                    // process should be restored event
+                    .with_system(buttons::interaction.label(ButtonsInteraction))
+                    .with_system(Self::wait_restore.after(ButtonsInteraction))
                     // add mouse support
                     .with_system(Self::mouse_system)
                     // add keyboard support
@@ -176,7 +199,6 @@ struct Slider {
 #[derive(Component)]
 struct SliderNumber;
 
-// TODO: update board after window resized.
 #[derive(Component, Default)]
 struct Board {
     offset: f32,
@@ -186,6 +208,27 @@ struct Board {
     text_size: f32,
     slider_map: Vec<Position>,
     position_map: HashMap<Position, usize>,
+}
+
+impl Board {
+    fn restore(&mut self, origin: &BoardOrigin) {
+        self.position_map = origin.position_map.clone();
+        self.slider_map = origin.slider_map.clone();
+    }
+}
+
+struct BoardOrigin {
+    position_map: HashMap<Position, usize>,
+    slider_map: Vec<Position>,
+}
+
+impl From<&Board> for BoardOrigin {
+    fn from(board: &Board) -> Self {
+        Self {
+            position_map: board.position_map.clone(),
+            slider_map: board.slider_map.clone(),
+        }
+    }
 }
 
 // setup a position structure for hash
